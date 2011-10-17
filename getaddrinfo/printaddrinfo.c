@@ -7,20 +7,23 @@
 #include "printaddrinfo.h"
 
 #define STR(x) #x
-#if 0
-#define STRSTR(x) STR(x)
-#endif
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(*(array)))
 
-struct flags_and_desc
+enum info_comparison
+{
+        INFO_COMPARISON_FLAG = 1,
+        INFO_COMPARISON_VALUE = 2,
+};
+
+struct info
 {
         uint32_t flag;
         const char *name;
         const char *desc;
 };
 
-static const struct flags_and_desc ai_flags_and_desc[] =
+static const struct info ai_flags_info[] =
 {
         {AI_PASSIVE, STR(AI_PASSIVE),
          "Socket address is intended for bind"},
@@ -90,17 +93,30 @@ present_failed_status(int status)
 }
 
 static void
-present_flags_and_desc(const char *msg, uint32_t flags,
-                       const struct flags_and_desc *flags_and_desc,
-                       size_t length)
+present_info(const char *msg, enum info_comparison compare, uint32_t flags,
+             const struct info *flags_and_desc,
+             size_t length)
 {
         unsigned int i;
 
         for (i = 0; i < length; i++)
         {
-                const struct flags_and_desc *curr = &flags_and_desc[i];
+                const struct info *curr = &flags_and_desc[i];
+                int match;
 
-                if (flags & curr->flag)
+                switch (compare)
+                {
+                case INFO_COMPARISON_FLAG:
+                        match = (flags & curr->flag);
+                        break;
+                case INFO_COMPARISON_VALUE:
+                        match = (flags == curr->flag);
+                        break;
+                default:
+                        match = 0;
+                }
+                
+                if (match)
                 {
                         printf("%s%s - %s.\n", msg, curr->name, curr->desc);
                 }
@@ -114,8 +130,8 @@ static void present_ai_flags(int order, int ai_flags)
 
         sprintf(msg1, "[%d]->ai_flags = ", order);
         sprintf(msg2, "%-20s", msg1);
-        present_flags_and_desc(msg2, ai_flags, ai_flags_and_desc,
-                               ARRAY_SIZE(ai_flags_and_desc));
+        present_info(msg2, INFO_COMPARISON_FLAG, ai_flags, ai_flags_info,
+                     ARRAY_SIZE(ai_flags_info));
 }
 
 static void present_ai_family(int order, int ai_family)
