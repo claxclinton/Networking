@@ -76,25 +76,25 @@ static int echo_client(int sfd, const char *msg)
         char buf[BUF_SIZE];
         size_t len;
         int status;
-        ssize_t nread;
+        ssize_t nreceived;
         
         len = strlen(msg) + 1;
         printf("Sending %ld bytes: \"%s\"\n", (long)len, msg);
-        status = write(sfd, msg, len);
+        status = send(sfd, msg, len, 0);
         if (status != (int)len)
         {
                 fprintf(stderr, "Partial write failed.\n");
                 return __LINE__;
         }
 
-        nread = read(sfd, buf, BUF_SIZE);
-        if (nread == -1)
+        nreceived = recv(sfd, buf, BUF_SIZE, 0);
+        if (nreceived == -1)
         {
                 perror("read");
                 return __LINE__;
         }
 
-        printf("Received %ld bytes: \"%s\"\n", (long)nread, buf);
+        printf("Received %ld bytes: \"%s\"\n", (long)nreceived, buf);
 
         return 0;
 }
