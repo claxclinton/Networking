@@ -260,7 +260,7 @@ print_info_and_description(const char *msg, const char *name,
                 num_columns = get_num_columns();
         }
                                 
-        sprintf(prefix, "%s%s - ", msg, name);
+        sprintf(prefix, "%s%-15s ", msg, name);
         print_description(prefix, description, strlen(description), 0,
                           strlen(prefix), num_columns);
 }
