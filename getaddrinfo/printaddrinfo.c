@@ -15,6 +15,7 @@ struct info_elem;
 
 static int compare_flag(uint32_t elem_value, uint32_t ai_value);
 static int compare_ls_nibble(uint32_t elem_value, uint32_t ai_value);
+static int compare_value(uint32_t elem_value, uint32_t ai_value);
 
 struct info_elem
 {
@@ -126,6 +127,55 @@ static const struct info ai_socktype_flags_info =
         ai_socktype_flags_info_elems
 };
 
+static const struct info_elem errno_info_elems[] =
+{
+        {EAI_ADDRFAMILY, STR(EAI_ADDRFAMILY),
+         "The specified network host does not have any network addresses in "
+         "the requested address family."},
+        {EAI_AGAIN, STR(EAI_AGAIN),
+         "The name server returned a temporary failure indication. Try again "
+         "later."},
+        {EAI_BADFLAGS, STR(EAI_BADFLAGS),
+         "hints.ai_flags contains invalid flags; or, hints.ai_flags "
+         "included AI_CANONNAME and name was NULL."},
+        {EAI_FAIL, STR(EAI_FAIL),
+         "The name server returned a permanent failure indication."},
+        {EAI_FAMILY, STR(EAI_FAMILY),
+         "The requested address family is not supported."},
+        {EAI_MEMORY, STR(EAI_MEMORY),
+         "Out of memory."},
+        {EAI_NODATA, STR(EAI_NODATA),
+         "The specified network host exists, but does not have any network "
+         "addresses defined."},
+        {EAI_NONAME, STR(EAI_NONAME),
+         "The node or service is not known; or both node and service are "
+         "NULL; or AI_NUMERICSERV was specified in hints.ai_flags and "
+         "service was not a numeric port-number string."},
+        {EAI_SERVICE, STR(EAI_SERVICE),
+         "The requested service is not available for the requested socket "
+         "type. It may be available through another socket type. "
+         "For example, this error could occur if service was \"shell\" "
+         "(a service only available on stream sockets), and either "
+         "hints.ai_protocol was IPPROTO_UDP, or hints.ai_socktype was "
+         "SOCK_DGRAM; or the error could occur if service was "
+         "not NULL, and hints.ai_socktype was SOCK_RAW (a socket type that "
+         "does not support the concept of services)."},
+        {EAI_SOCKTYPE, STR(EAI_SOCKTYPE),
+         "The requested socket type is not supported. This could "
+         "occur, for example, if hints.ai_socktype  and "
+         "hints.ai_protocol  are  inconsistent  (e.g., SOCK_DGRAM and "
+         "IPPROTO_TCP, respectively)."},
+        {EAI_SYSTEM, STR(EAI_SYSTEM),
+         "Other system error, check errno for details."}
+};
+
+static const struct info errno_info =
+{
+        compare_value,
+        ARRAY_SIZE(errno_info_elems),
+        errno_info_elems
+};
+
 static int compare_flag(uint32_t elem_value, uint32_t ai_value)
 {
         return elem_value & ai_value;
@@ -136,48 +186,9 @@ static int compare_ls_nibble(uint32_t elem_value, uint32_t ai_value)
         return (ai_value & 0x0000000FUL) == elem_value;
 }
 
-static void
-print_failed_status(int status)
+static int compare_value(uint32_t elem_value, uint32_t ai_value)
 {
-        switch (status)
-        {
-        case EAI_ADDRFAMILY:
-                printf("Failed with status: EAI_ADDRFAMILY.\n");
-                break;
-        case EAI_AGAIN:
-                printf("Failed with status: EAI_AGAIN.\n");
-                break;
-        case EAI_BADFLAGS:
-                printf("Failed with status: EAI_BADFLAGS.\n");
-                break;
-        case EAI_FAIL:
-                printf("Failed with status: EAI_FAIL.\n");
-                break;
-        case EAI_FAMILY:
-                printf("Failed with status: EAI_FAMILY.\n");
-                break;
-        case EAI_MEMORY:
-                printf("Failed with status: EAI_MEMORY.\n");
-                break;
-        case EAI_NODATA:
-                printf("Failed with status: EAI_NODATA.\n");
-                break;
-        case EAI_NONAME:
-                printf("Failed with status: EAI_NONAME.\n");
-                break;
-        case EAI_SERVICE:
-                printf("Failed with status: EAI_SERVICE.\n");
-                break;
-        case EAI_SOCKTYPE:
-                printf("Failed with status: EAI_SOCKTYPE.\n");
-                break;
-        case EAI_SYSTEM:
-                printf("Failed with status: EAI_SYSTEM.\n");
-                break;
-        default:
-                printf("Failed with unknown status.\n");
-                break;
-        }
+        return elem_value == ai_value;
 }
 
 static size_t get_num_columns(void)
@@ -213,6 +224,12 @@ print_description(const char *prefix, const char *description,
                 printf("%s", space);
         }
 
+        if (*description == ' ')
+        {
+                description++;
+                description_len--;
+        }
+        
         unsigned int cols_left = num_columns - prefix_len;
         if (cols_left > description_len)
         {
@@ -249,7 +266,7 @@ print_info_and_description(const char *msg, const char *name,
 }
 
 static void print_info(const char *msg, uint32_t ai_value,
-                         const struct info *info, int print_description)
+                       const struct info *info, int print_description)
 {
         unsigned int i;
 
@@ -270,6 +287,16 @@ static void print_info(const char *msg, uint32_t ai_value,
                         }
                 }
         }
+}
+
+static void
+print_failed_status(int status)
+{
+        char msg[100];
+        const int print_description = 1;
+
+        sprintf(msg, "Error: ");
+        print_info(msg, status, &errno_info, print_description);
 }
 
 static void print_ai_flags(int order, int print_description, int ai_flags)
