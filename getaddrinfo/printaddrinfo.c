@@ -12,7 +12,7 @@
 
 struct info_elem;
 
-static int check_flags(uint32_t elem_value, uint32_t ai_value);
+static int compare_flag(uint32_t elem_value, uint32_t ai_value);
 static int compare_ls_nibble(uint32_t elem_value, uint32_t ai_value);
 
 struct info_elem
@@ -24,7 +24,7 @@ struct info_elem
 
 struct info
 {
-        int (*compare)(uint32_t elem_value, uint32_t ai_value);
+        int (*is_match)(uint32_t elem_value, uint32_t ai_value);
         const size_t num_elems;
         const struct info_elem *info_elems;
 };
@@ -32,48 +32,48 @@ struct info
 static const struct info_elem ai_flags_info_elems[] =
 {
         {AI_PASSIVE, STR(AI_PASSIVE),
-         "Socket address is intended for bind"},
+         "Socket address is intended for bind."},
         {AI_CANONNAME, STR(AI_CANONNAME),
-         "Request for canonical name"},
+         "Request for canonical name."},
         {AI_NUMERICHOST, STR(AI_NUMERICHOST),
-         "Don't use name resolution"},
+         "Don't use name resolution."},
         {AI_V4MAPPED, STR(AI_V4MAPPED),
-         "IPv4 mapped addresses are acceptable"},
+         "IPv4 mapped addresses are acceptable."},
         {AI_ALL, STR(AI_ALL),
-         "Return IPv4 mapped and IPv6 addresses"},
+         "Return IPv4 mapped and IPv6 addresses."},
         {AI_ADDRCONFIG, STR(AI_ADDRCONFIG),
-         "Use configuration of this host to choose returned address type"},
+         "Use configuration of this host to choose returned address type."},
         {AI_IDN, STR(AI_IDN),
          "IDN encode input (assuming it is encoded in the current "
-         "locale's character set) before looking it up. "},
+         "locale's character set) before looking it up."},
         {AI_CANONIDN, STR(AI_CANONIDN),
-         "Translate canonical name from IDN format. "},
+         "Translate canonical name from IDN format."},
         {AI_IDN_ALLOW_UNASSIGNED, STR(AI_IDN_ALLOW_UNASSIGNED),
-         "Don't reject unassigned Unicode code points"},
+         "Don't reject unassigned Unicode code points."},
         {AI_IDN_USE_STD3_ASCII_RULES, STR(AI_IDN_USE_STD3_ASCII_RULES),
-         "Validate strings according to STD3 rules"},
+         "Validate strings according to STD3 rules."},
 };
 
 static const struct info ai_flags_info =
 {
-        check_flags,
+        compare_flag,
         ARRAY_SIZE(ai_flags_info_elems),
         ai_flags_info_elems
 };
 
 static const struct info_elem ai_family_info_elems[] =
 {
-        {AF_UNIX, STR(AF_UNIX), " Local communication"},
-        {AF_LOCAL, STR(AF_LOCAL), " Local communication"},
-        {AF_INET, STR(AF_INET), "IPv4 Internet protocols"},
-        {AF_INET6, STR(AF_INET6), "IPv6 Internet protocols"},
-        {AF_IPX, STR(AF_IPX), "IPX - Novell protocols"},
-        {AF_NETLINK, STR(AF_NETLINK), "Kernel user interface device"},
-        {AF_X25, STR(AF_X25), "ITU-T X.25 / ISO-8208 protocol"},
-        {AF_AX25, STR(AF_AX25), "Amateur radio AX.25 protocol"},
-        {AF_ATMPVC, STR(AF_ATMPVC), "Access to raw ATM PVCs"},
-        {AF_APPLETALK, STR(AF_APPLETALK), "Appletalk"},
-        {AF_PACKET, STR(AF_PACKET), "Low level packet interface"},
+        {AF_UNIX, STR(AF_UNIX), "Local communication."},
+        {AF_LOCAL, STR(AF_LOCAL), " Local communication."},
+        {AF_INET, STR(AF_INET), "IPv4 Internet protocols."},
+        {AF_INET6, STR(AF_INET6), "IPv6 Internet protocols."},
+        {AF_IPX, STR(AF_IPX), "IPX - Novell protocols."},
+        {AF_NETLINK, STR(AF_NETLINK), "Kernel user interface device."},
+        {AF_X25, STR(AF_X25), "ITU-T X.25 / ISO-8208 protocol."},
+        {AF_AX25, STR(AF_AX25), "Amateur radio AX.25 protocol."},
+        {AF_ATMPVC, STR(AF_ATMPVC), "Access to raw ATM PVCs."},
+        {AF_APPLETALK, STR(AF_APPLETALK), "Appletalk."},
+        {AF_PACKET, STR(AF_PACKET), "Low level packet interface."},
 };
 
 static const struct info ai_family_info =
@@ -83,7 +83,49 @@ static const struct info ai_family_info =
         ai_family_info_elems
 };
 
-static int check_flags(uint32_t elem_value, uint32_t ai_value)
+static const struct info_elem ai_socktype_info_elems[] =
+{
+        {SOCK_STREAM, STR(SOCK_STREAM),
+         "Sequenced, reliable, connection-based byte streams."},
+        {SOCK_DGRAM, STR(SOCK_DGRAM),
+         "Connectionless, unreliable datagrams of fixed maximum length."},
+        {SOCK_RAW, STR(SOCK_RAW),
+         "Raw protocol interface."},
+        {SOCK_RDM, STR(SOCK_RDM),
+         "Reliably-delivered messages."},
+        {SOCK_SEQPACKET, STR(SOCK_SEQPACKET),
+         "Sequenced, reliable, connection-based, datagrams of fixed maximum "
+         "length."},
+        {SOCK_DCCP, STR(SOCK_DCCP),
+         "Datagram Congestion Control Protocol."},
+        {SOCK_PACKET, STR(SOCK_PACKET),
+         "Linux specific way of getting packets at the dev level." 
+         "For writing rarp and other similar things on the user level."},
+};
+
+static const struct info ai_socktype_info =
+{
+        compare_ls_nibble,
+        ARRAY_SIZE(ai_socktype_info_elems),
+        ai_socktype_info_elems
+};
+
+static const struct info_elem ai_socktype_flags_info_elems[] =
+{
+        {SOCK_CLOEXEC, STR(SOCK_CLOEXEC),
+         "Atomically set close-on-exec flag for the new descriptor(s)."},
+        {SOCK_NONBLOCK, STR(SOCK_NONBLOCK),
+         "Atomically mark descriptor(s) as non-blocking."}
+};
+
+static const struct info ai_socktype_flags_info =
+{
+        compare_flag,
+        ARRAY_SIZE(ai_socktype_flags_info_elems),
+        ai_socktype_flags_info_elems
+};
+
+static int compare_flag(uint32_t elem_value, uint32_t ai_value)
 {
         return elem_value & ai_value;
 }
@@ -137,8 +179,8 @@ present_failed_status(int status)
         }
 }
 
-static void
-present_info(const char *msg, uint32_t ai_value, const struct info *info)
+static void present_info(const char *msg, uint32_t ai_value,
+                         const struct info *info)
 {
         unsigned int i;
 
@@ -146,9 +188,9 @@ present_info(const char *msg, uint32_t ai_value, const struct info *info)
         {
                 const struct info_elem *elem = &info->info_elems[i];
                 
-                if (info->compare(elem->value, ai_value))
+                if (info->is_match(elem->value, ai_value))
                 {
-                        printf("%s%s - %s.\n", msg, elem->name, elem->desc);
+                        printf("%s%s - %s\n", msg, elem->name, elem->desc);
                 }
         }
 }
@@ -158,7 +200,7 @@ static void present_ai_flags(int order, int ai_flags)
         char msg1[100];
         char msg2[100];
 
-        sprintf(msg1, "[%d]->ai_flags = ", order);
+        sprintf(msg1, "[%d]->ai_flags", order);
         sprintf(msg2, "%-20s", msg1);
         present_info(msg2, ai_flags, &ai_flags_info);
 }
@@ -168,17 +210,32 @@ static void present_ai_family(int order, int ai_family)
         char msg1[100];
         char msg2[100];
 
-        sprintf(msg1, "[%d]->ai_family = ", order);
+        sprintf(msg1, "[%d]->ai_family", order);
         sprintf(msg2, "%-20s", msg1);
         present_info(msg2, ai_family, &ai_family_info);
 }
 
 static void present_ai_socktype(int order, int ai_socktype)
 {
+        char msg1[100];
+        char msg2[100];
+
+        sprintf(msg1, "[%d]->ai_socktype", order);
+        sprintf(msg2, "%-20s", msg1);
+        present_info(msg2, ai_socktype, &ai_socktype_info);
+        present_info(msg2, ai_socktype, &ai_socktype_flags_info);
 }
 
 static void present_ai_protocol(int order, int ai_protocol)
 {
+        char msg1[100];
+        char msg2[100];
+
+        sprintf(msg1, "[%d]->ai_protocol", order);
+        sprintf(msg2, "%-20s", msg1);
+
+        struct protoent *protoent = getprotobynumber(ai_protocol);
+        printf("%s%s\n", msg2, protoent->p_name);
 }
 
 static void present_ai_addrlen(int order, size_t ai_addrlen)
@@ -187,6 +244,17 @@ static void present_ai_addrlen(int order, size_t ai_addrlen)
 
 static void present_ai_canonname(int order, char *ai_canonname)
 {
+        if (ai_canonname == NULL)
+        {
+                return;
+        }
+        
+        char msg1[100];
+        char msg2[100];
+
+        sprintf(msg1, "[%d]->ai_canonname", order);
+        sprintf(msg2, "%-20s", msg1);
+        printf("%s%s\n", msg2, ai_canonname);
 }
 
 static void present_addr_info(const struct addrinfo *addrinfo)
@@ -215,6 +283,7 @@ void print_addr_info(const char *address)
 
         printf("Printing addrinfo for address: \"%s\".\n", address);
         status = getaddrinfo(address, NULL, NULL, &res);
+
         if (status != 0)
         {
                 present_failed_status(status);
