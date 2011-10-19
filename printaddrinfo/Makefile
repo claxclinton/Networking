@@ -1,7 +1,7 @@
 CFLAGS += -g
 CFLAGS += -D_GNU_SOURCE
 
-EXEC := getaddrinfo
+EXEC := printaddrinfo
 
 OBJS := 
 OBJS += main.o
