@@ -1,6 +1,7 @@
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -384,7 +385,8 @@ print_title(const char *address)
         char msg[100];
         size_t len;
         
-        sprintf(msg, "Address information for \"%s\"", address);
+        sprintf(msg, "Address information for \"%s\"",
+                (address == NULL) ? "localhost:<any-port>" : address);
         len = strlen(msg);
         printf("%s\n", msg);
         memset(msg, '=', len);
@@ -392,21 +394,73 @@ print_title(const char *address)
         printf("%s\n", msg);
 }
 
+static void
+get_host_and_port(const char *address, char **host_ptr, char **port_ptr)
+{
+        if (address == NULL)
+        {
+                *host_ptr = NULL;
+                *port_ptr = NULL;
+        }
+        else
+        {
+                char *colon;
+
+                *host_ptr = malloc(40);
+                strcpy(*host_ptr, address);
+                colon = strstr(*host_ptr, ":");
+                if (colon == NULL)
+                {
+                        *port_ptr = NULL;
+                }
+                else
+                {
+                        *colon = '\0';
+                        
+                        if (*(colon + 1) == '\0')
+                        {
+                                *port_ptr = NULL;
+                        }
+                        else
+                        {
+                                *port_ptr = malloc(40);
+                                strcpy(*port_ptr, colon + 1);
+                        }
+                }
+        }
+}
+
+static void free_host_and_port(char *host, char *port)
+{
+        if (host != NULL)
+        {
+                free(host);
+
+        }
+        
+        if (port != NULL)
+        {
+                free(port);
+        }
+}
+
 void print_addr_info(const char *address, int print_description)
 {
         struct addrinfo *res;
         int status;
+        char *host;
+        char *port;
 
         print_title(address);
-        status = getaddrinfo(address, NULL, NULL, &res);
-
+        get_host_and_port(address, &host, &port);
+        status = getaddrinfo(host, port, NULL, &res);
+        free_host_and_port(host, port);
         if (status != 0)
         {
                 print_failed_status(status);
                 return;
         }
         
-
         print_ai(res, print_description);
         freeaddrinfo(res);
 }

@@ -1,10 +1,16 @@
 #include <stdio.h>
 #include <unistd.h>
 
+static void print_syntax(void)
+{
+        printf("SYNTAX: printaddrinfo [-d] [HOST[:PORT]]\n\n");
+}
+
 int main(int argc, char **argv)
 {
         int opt;
         int flag_description = 0;
+        const char *address;
 
         opt = getopt(argc, argv, "d");
         if (opt == 'd')
@@ -15,18 +21,13 @@ int main(int argc, char **argv)
         }
         else if (opt != -1)
         {
-                printf("Unknown option: -%c.\n\n", opt);
+                printf("\nUNKNOWN OPTION: -%c.\n\n", opt);
+                print_syntax();
                 return 1;
         }
 
-        if (argc == 1)
-        {
-                printf("Must specify a valid address, for example "
-                       "www.google.com.\n\n");
-                return 2;
-        }
-        
-        print_addr_info(argv[1], flag_description);
+        address = (argc == 1) ? NULL : argv[1];
+        print_addr_info(address, flag_description);
         printf("\n");
         
         return 0;
