@@ -48,6 +48,25 @@ static const struct info ai_flags_info[] =
          "Validate strings according to STD3 rules"},
 };
 
+static const struct info ai_family_info[] =
+{
+        {AF_UNIX, STR(AF_UNIX), " Local communication"},
+        {AF_LOCAL, STR(AF_LOCAL), " Local communication"},
+        {AF_INET, STR(AF_INET), "IPv4 Internet protocols"},
+        {AF_INET6, STR(AF_INET6), "IPv6 Internet protocols"},
+        {AF_IPX, STR(AF_IPX), "IPX - Novell protocols"},
+        {AF_NETLINK, STR(AF_NETLINK), "Kernel user interface device"},
+        {AF_X25, STR(AF_X25), "ITU-T X.25 / ISO-8208 protocol"},
+        {AF_AX25, STR(AF_AX25), "Amateur radio AX.25 protocol"},
+        {AF_ATMPVC, STR(AF_ATMPVC), "Access to raw ATM PVCs"},
+        {AF_APPLETALK, STR(AF_APPLETALK), "Appletalk"},
+        {AF_PACKET, STR(AF_PACKET), "Low level packet interface"},
+};
+
+static const struct info ai_socktype_info[] =
+{
+};
+
 static void
 present_failed_status(int status)
 {
@@ -141,24 +160,8 @@ static void present_ai_family(int order, int ai_family)
 
         sprintf(msg1, "[%d]->ai_family = ", order);
         sprintf(msg2, "%-20s", msg1);
-        printf("%s", msg2);
-        
-        switch (ai_family)
-        {
-        case AF_INET:
-                printf("AF_INET");
-                break;
-        case AF_INET6:
-                printf("AF_INET6");
-                break;
-        case AF_UNSPEC:
-                printf("AF_UNSPEC");
-                break;
-        default:
-                printf("UNKNOWN");
-                break;
-        }
-        printf("\n");
+        present_info(msg2, INFO_COMPARISON_VALUE, ai_family, ai_family_info,
+                     ARRAY_SIZE(ai_family_info));
 }
 
 static void present_ai_socktype(int order, int ai_socktype)
@@ -181,8 +184,8 @@ static void present_addr_info(const struct addrinfo *addrinfo)
 {
         static int order = 0;
         
-        present_ai_flags(order, addrinfo->ai_flags);
         present_ai_family(order, addrinfo->ai_family);
+        present_ai_flags(order, addrinfo->ai_flags);
         present_ai_socktype(order, addrinfo->ai_socktype);
         present_ai_protocol(order, addrinfo->ai_protocol);
         present_ai_addrlen(order, addrinfo->ai_addrlen);
