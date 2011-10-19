@@ -136,7 +136,7 @@ static int compare_ls_nibble(uint32_t elem_value, uint32_t ai_value)
 }
 
 static void
-present_failed_status(int status)
+print_failed_status(int status)
 {
         switch (status)
         {
@@ -179,8 +179,8 @@ present_failed_status(int status)
         }
 }
 
-static void present_info(const char *msg, uint32_t ai_value,
-                         const struct info *info, int present_description)
+static void print_info(const char *msg, uint32_t ai_value,
+                         const struct info *info, int print_description)
 {
         unsigned int i;
 
@@ -190,7 +190,7 @@ static void present_info(const char *msg, uint32_t ai_value,
                 
                 if (info->is_match(elem->value, ai_value))
                 {
-                        if (present_description)
+                        if (print_description)
                         {
                                 printf("%s%s - %s\n", msg, elem->name,
                                        elem->desc);
@@ -203,27 +203,27 @@ static void present_info(const char *msg, uint32_t ai_value,
         }
 }
 
-static void present_ai_flags(int order, int present_description, int ai_flags)
+static void print_ai_flags(int order, int print_description, int ai_flags)
 {
         char msg1[100];
         char msg2[100];
 
         sprintf(msg1, "[%d]->ai_flags", order);
         sprintf(msg2, "%-20s", msg1);
-        present_info(msg2, ai_flags, &ai_flags_info, present_description);
+        print_info(msg2, ai_flags, &ai_flags_info, print_description);
 }
 
-static void present_ai_family(int order, int present_description, int ai_family)
+static void print_ai_family(int order, int print_description, int ai_family)
 {
         char msg1[100];
         char msg2[100];
 
         sprintf(msg1, "[%d]->ai_family", order);
         sprintf(msg2, "%-20s", msg1);
-        present_info(msg2, ai_family, &ai_family_info, present_description);
+        print_info(msg2, ai_family, &ai_family_info, print_description);
 }
 
-static void present_ai_socktype(int order, int present_description,
+static void print_ai_socktype(int order, int print_description,
                                 int ai_socktype)
 {
         char msg1[100];
@@ -231,12 +231,12 @@ static void present_ai_socktype(int order, int present_description,
 
         sprintf(msg1, "[%d]->ai_socktype", order);
         sprintf(msg2, "%-20s", msg1);
-        present_info(msg2, ai_socktype, &ai_socktype_info, present_description);
-        present_info(msg2, ai_socktype, &ai_socktype_flags_info,
-                     present_description);
+        print_info(msg2, ai_socktype, &ai_socktype_info, print_description);
+        print_info(msg2, ai_socktype, &ai_socktype_flags_info,
+                     print_description);
 }
 
-static void present_ai_protocol(int order, int ai_protocol)
+static void print_ai_protocol(int order, int ai_protocol)
 {
         char msg1[100];
         char msg2[100];
@@ -248,7 +248,7 @@ static void present_ai_protocol(int order, int ai_protocol)
         printf("%s%s\n", msg2, protoent->p_name);
 }
 
-static void present_ai_canonname(int order, char *ai_canonname)
+static void print_ai_canonname(int order, char *ai_canonname)
 {
         if (ai_canonname == NULL)
         {
@@ -263,22 +263,22 @@ static void present_ai_canonname(int order, char *ai_canonname)
         printf("%s%s\n", msg2, ai_canonname);
 }
 
-static void present_addr_info(const struct addrinfo *addrinfo,
-                              int present_description)
+static void print_ai(const struct addrinfo *addrinfo,
+                                     int print_description)
 {
         static int order = 0;
         
-        present_ai_family(order, present_description, addrinfo->ai_family);
-        present_ai_flags(order, present_description, addrinfo->ai_flags);
-        present_ai_socktype(order, present_description, addrinfo->ai_socktype);
-        present_ai_protocol(order, addrinfo->ai_protocol);
-        present_ai_canonname(order, addrinfo->ai_canonname);
+        print_ai_family(order, print_description, addrinfo->ai_family);
+        print_ai_flags(order, print_description, addrinfo->ai_flags);
+        print_ai_socktype(order, print_description, addrinfo->ai_socktype);
+        print_ai_protocol(order, addrinfo->ai_protocol);
+        print_ai_canonname(order, addrinfo->ai_canonname);
 
         if (addrinfo->ai_next != NULL)
         {
                 printf("\n");
                 order++;
-                present_addr_info(addrinfo->ai_next, present_description);
+                print_ai(addrinfo->ai_next, print_description);
         }
 }
 
@@ -296,7 +296,7 @@ print_title(const char *address)
         printf("%s\n", msg);
 }
 
-void print_addr_info(const char *address, int present_description)
+void print_addr_info(const char *address, int print_description)
 {
         struct addrinfo *res;
         int status;
@@ -306,11 +306,12 @@ void print_addr_info(const char *address, int present_description)
 
         if (status != 0)
         {
-                present_failed_status(status);
+                print_failed_status(status);
                 return;
         }
         
-        present_addr_info(res, present_description);
+
+        print_ai(res, print_description);
         freeaddrinfo(res);
 }
 
