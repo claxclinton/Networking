@@ -1,8 +1,9 @@
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netdb.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 #include "printaddrinfo.h"
 
@@ -179,6 +180,74 @@ print_failed_status(int status)
         }
 }
 
+static size_t get_num_columns(void)
+{
+        struct winsize w;
+        size_t cols;
+        
+        ioctl(0, TIOCGWINSZ, &w);
+        cols = w.ws_col;
+
+        if (cols == 0)
+        {
+                cols = 60;
+        }
+        
+        return cols;
+}
+
+static void
+print_description(const char *prefix, const char *description,
+                  size_t description_len, int count, size_t prefix_len,
+                  size_t num_columns)
+{
+        if (count == 0)
+        {
+                printf("%s", prefix);
+        }
+        else
+        {
+                char space[100];
+                memset(space, ' ', prefix_len);
+                space[prefix_len] = '\0';
+                printf("%s", space);
+        }
+
+        unsigned int cols_left = num_columns - prefix_len;
+        if (cols_left > description_len)
+        {
+                printf("%s\n", description);
+        }
+        else
+        {
+                char line[100];
+
+                strcpy(line, description);
+                line[cols_left] = '\0';
+                printf("%s\n", line);
+                description += cols_left;
+                print_description(prefix, description, strlen(description),
+                                  count + 1, prefix_len, num_columns);
+        }
+}
+
+static void
+print_info_and_description(const char *msg, const char *name,
+                           const char *description)
+{
+        static size_t num_columns;
+        char prefix[100];
+        
+        if (num_columns == 0)
+        {
+                num_columns = get_num_columns();
+        }
+                                
+        sprintf(prefix, "%s%s - ", msg, name);
+        print_description(prefix, description, strlen(description), 0,
+                          strlen(prefix), num_columns);
+}
+
 static void print_info(const char *msg, uint32_t ai_value,
                          const struct info *info, int print_description)
 {
@@ -192,8 +261,8 @@ static void print_info(const char *msg, uint32_t ai_value,
                 {
                         if (print_description)
                         {
-                                printf("%s%s - %s\n", msg, elem->name,
-                                       elem->desc);
+                                print_info_and_description(msg, elem->name,
+                                                           elem->desc);
                         }
                         else
                         {
@@ -264,7 +333,7 @@ static void print_ai_canonname(int order, char *ai_canonname)
 }
 
 static void print_ai(const struct addrinfo *addrinfo,
-                                     int print_description)
+                     int print_description)
 {
         static int order = 0;
         
@@ -314,4 +383,3 @@ void print_addr_info(const char *address, int print_description)
         print_ai(res, print_description);
         freeaddrinfo(res);
 }
-
