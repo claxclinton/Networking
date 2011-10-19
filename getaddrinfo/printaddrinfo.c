@@ -282,12 +282,26 @@ static void present_addr_info(const struct addrinfo *addrinfo,
         }
 }
 
+static void
+print_title(const char *address)
+{
+        char msg[100];
+        size_t len;
+        
+        sprintf(msg, "Address information for \"%s\"", address);
+        len = strlen(msg);
+        printf("%s\n", msg);
+        memset(msg, '=', len);
+        msg[len] = '\0';
+        printf("%s\n", msg);
+}
+
 void print_addr_info(const char *address, int present_description)
 {
         struct addrinfo *res;
         int status;
 
-        printf("ADDRINFO FOR: \"%s\".\n", address);
+        print_title(address);
         status = getaddrinfo(address, NULL, NULL, &res);
 
         if (status != 0)
