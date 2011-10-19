@@ -10,22 +10,21 @@
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(*(array)))
 
-enum info_comparison
-{
-        INFO_COMPARISON_FLAG = 1,
-        INFO_COMPARISON_VALUE = 2,
-};
+struct info_elem;
+
+static int check_flags(uint32_t elem_value, uint32_t ai_value);
+static int compare_ls_nibble(uint32_t elem_value, uint32_t ai_value);
 
 struct info_elem
 {
-        const uint32_t flag;
+        const uint32_t value;
         const char *name;
         const char *desc;
 };
 
 struct info
 {
-        const enum info_comparison comparison;
+        int (*compare)(uint32_t elem_value, uint32_t ai_value);
         const size_t num_elems;
         const struct info_elem *info_elems;
 };
@@ -57,7 +56,7 @@ static const struct info_elem ai_flags_info_elems[] =
 
 static const struct info ai_flags_info =
 {
-        INFO_COMPARISON_FLAG,
+        check_flags,
         ARRAY_SIZE(ai_flags_info_elems),
         ai_flags_info_elems
 };
@@ -79,10 +78,20 @@ static const struct info_elem ai_family_info_elems[] =
 
 static const struct info ai_family_info =
 {
-        INFO_COMPARISON_VALUE,
+        compare_ls_nibble,
         ARRAY_SIZE(ai_family_info_elems),
         ai_family_info_elems
 };
+
+static int check_flags(uint32_t elem_value, uint32_t ai_value)
+{
+        return elem_value & ai_value;
+}
+
+static int compare_ls_nibble(uint32_t elem_value, uint32_t ai_value)
+{
+        return (ai_value & 0x0000000FUL) == elem_value;
+}
 
 static void
 present_failed_status(int status)
@@ -129,30 +138,17 @@ present_failed_status(int status)
 }
 
 static void
-present_info(const char *msg, uint32_t value, const struct info *info)
+present_info(const char *msg, uint32_t ai_value, const struct info *info)
 {
         unsigned int i;
 
         for (i = 0; i < info->num_elems; i++)
         {
-                const struct info_elem *curr = &info->info_elems[i];
-                int match;
-
-                switch (info->comparison)
-                {
-                case INFO_COMPARISON_FLAG:
-                        match = (value & curr->flag);
-                        break;
-                case INFO_COMPARISON_VALUE:
-                        match = (value == curr->flag);
-                        break;
-                default:
-                        match = 0;
-                }
+                const struct info_elem *elem = &info->info_elems[i];
                 
-                if (match)
+                if (info->compare(elem->value, ai_value))
                 {
-                        printf("%s%s - %s.\n", msg, curr->name, curr->desc);
+                        printf("%s%s - %s.\n", msg, elem->name, elem->desc);
                 }
         }
 }
