@@ -238,10 +238,6 @@ static void present_ai_protocol(int order, int ai_protocol)
         printf("%s%s\n", msg2, protoent->p_name);
 }
 
-static void present_ai_addrlen(int order, size_t ai_addrlen)
-{
-}
-
 static void present_ai_canonname(int order, char *ai_canonname)
 {
         if (ai_canonname == NULL)
@@ -265,7 +261,6 @@ static void present_addr_info(const struct addrinfo *addrinfo)
         present_ai_flags(order, addrinfo->ai_flags);
         present_ai_socktype(order, addrinfo->ai_socktype);
         present_ai_protocol(order, addrinfo->ai_protocol);
-        present_ai_addrlen(order, addrinfo->ai_addrlen);
         present_ai_canonname(order, addrinfo->ai_canonname);
 
         if (addrinfo->ai_next != NULL)
