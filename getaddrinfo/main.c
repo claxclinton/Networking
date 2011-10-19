@@ -26,7 +26,7 @@ int main(int argc, char **argv)
                 return 2;
         }
         
-        print_addr_info(argv[1]);
+        print_addr_info(argv[1], flag_description);
         
         return 0;
 }

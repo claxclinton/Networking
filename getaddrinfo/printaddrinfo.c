@@ -180,7 +180,7 @@ present_failed_status(int status)
 }
 
 static void present_info(const char *msg, uint32_t ai_value,
-                         const struct info *info)
+                         const struct info *info, int present_description)
 {
         unsigned int i;
 
@@ -190,40 +190,50 @@ static void present_info(const char *msg, uint32_t ai_value,
                 
                 if (info->is_match(elem->value, ai_value))
                 {
-                        printf("%s%s - %s\n", msg, elem->name, elem->desc);
+                        if (present_description)
+                        {
+                                printf("%s%s - %s\n", msg, elem->name,
+                                       elem->desc);
+                        }
+                        else
+                        {
+                                printf("%s%s\n", msg, elem->name);
+                        }
                 }
         }
 }
 
-static void present_ai_flags(int order, int ai_flags)
+static void present_ai_flags(int order, int present_description, int ai_flags)
 {
         char msg1[100];
         char msg2[100];
 
         sprintf(msg1, "[%d]->ai_flags", order);
         sprintf(msg2, "%-20s", msg1);
-        present_info(msg2, ai_flags, &ai_flags_info);
+        present_info(msg2, ai_flags, &ai_flags_info, present_description);
 }
 
-static void present_ai_family(int order, int ai_family)
+static void present_ai_family(int order, int present_description, int ai_family)
 {
         char msg1[100];
         char msg2[100];
 
         sprintf(msg1, "[%d]->ai_family", order);
         sprintf(msg2, "%-20s", msg1);
-        present_info(msg2, ai_family, &ai_family_info);
+        present_info(msg2, ai_family, &ai_family_info, present_description);
 }
 
-static void present_ai_socktype(int order, int ai_socktype)
+static void present_ai_socktype(int order, int present_description,
+                                int ai_socktype)
 {
         char msg1[100];
         char msg2[100];
 
         sprintf(msg1, "[%d]->ai_socktype", order);
         sprintf(msg2, "%-20s", msg1);
-        present_info(msg2, ai_socktype, &ai_socktype_info);
-        present_info(msg2, ai_socktype, &ai_socktype_flags_info);
+        present_info(msg2, ai_socktype, &ai_socktype_info, present_description);
+        present_info(msg2, ai_socktype, &ai_socktype_flags_info,
+                     present_description);
 }
 
 static void present_ai_protocol(int order, int ai_protocol)
@@ -253,13 +263,14 @@ static void present_ai_canonname(int order, char *ai_canonname)
         printf("%s%s\n", msg2, ai_canonname);
 }
 
-static void present_addr_info(const struct addrinfo *addrinfo)
+static void present_addr_info(const struct addrinfo *addrinfo,
+                              int present_description)
 {
         static int order = 0;
         
-        present_ai_family(order, addrinfo->ai_family);
-        present_ai_flags(order, addrinfo->ai_flags);
-        present_ai_socktype(order, addrinfo->ai_socktype);
+        present_ai_family(order, present_description, addrinfo->ai_family);
+        present_ai_flags(order, present_description, addrinfo->ai_flags);
+        present_ai_socktype(order, present_description, addrinfo->ai_socktype);
         present_ai_protocol(order, addrinfo->ai_protocol);
         present_ai_canonname(order, addrinfo->ai_canonname);
 
@@ -267,16 +278,16 @@ static void present_addr_info(const struct addrinfo *addrinfo)
         {
                 printf("\n");
                 order++;
-                present_addr_info(addrinfo->ai_next);
+                present_addr_info(addrinfo->ai_next, present_description);
         }
 }
 
-void print_addr_info(const char *address)
+void print_addr_info(const char *address, int present_description)
 {
         struct addrinfo *res;
         int status;
 
-        printf("Printing addrinfo for address: \"%s\".\n", address);
+        printf("ADDRINFO FOR: \"%s\".\n", address);
         status = getaddrinfo(address, NULL, NULL, &res);
 
         if (status != 0)
@@ -284,9 +295,8 @@ void print_addr_info(const char *address)
                 present_failed_status(status);
                 return;
         }
-
-        present_addr_info(res);
         
+        present_addr_info(res, present_description);
         freeaddrinfo(res);
 }
 
