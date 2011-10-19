@@ -25,8 +25,8 @@
  *                    the sender to be able to send back received data.
  *   getnameinfo    - Get name of peer and port and print this.
  *   send           - Used to send back received data to peer.
- *
  */
+
 static int get_addrinfo_on_port(struct addrinfo **result, const char *port)
 {
         const char *node = NULL; /* Means loopback interface. */
