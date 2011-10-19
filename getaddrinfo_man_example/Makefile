@@ -1,4 +1,6 @@
 CFLAGS += -g
+CFLAGS += -Wall
+CFLAGS += -Wextra
 CFLAGS += -D_GNU_SOURCE
 
 EXEC_SERVER := server
