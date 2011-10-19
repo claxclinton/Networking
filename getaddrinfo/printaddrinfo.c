@@ -16,14 +16,21 @@ enum info_comparison
         INFO_COMPARISON_VALUE = 2,
 };
 
-struct info
+struct info_elem
 {
-        uint32_t flag;
+        const uint32_t flag;
         const char *name;
         const char *desc;
 };
 
-static const struct info ai_flags_info[] =
+struct info
+{
+        const enum info_comparison comparison;
+        const size_t num_elems;
+        const struct info_elem *info_elems;
+};
+
+static const struct info_elem ai_flags_info_elems[] =
 {
         {AI_PASSIVE, STR(AI_PASSIVE),
          "Socket address is intended for bind"},
@@ -48,7 +55,14 @@ static const struct info ai_flags_info[] =
          "Validate strings according to STD3 rules"},
 };
 
-static const struct info ai_family_info[] =
+static const struct info ai_flags_info =
+{
+        INFO_COMPARISON_FLAG,
+        ARRAY_SIZE(ai_flags_info_elems),
+        ai_flags_info_elems
+};
+
+static const struct info_elem ai_family_info_elems[] =
 {
         {AF_UNIX, STR(AF_UNIX), " Local communication"},
         {AF_LOCAL, STR(AF_LOCAL), " Local communication"},
@@ -63,8 +77,11 @@ static const struct info ai_family_info[] =
         {AF_PACKET, STR(AF_PACKET), "Low level packet interface"},
 };
 
-static const struct info ai_socktype_info[] =
+static const struct info ai_family_info =
 {
+        INFO_COMPARISON_VALUE,
+        ARRAY_SIZE(ai_family_info_elems),
+        ai_family_info_elems
 };
 
 static void
@@ -112,24 +129,22 @@ present_failed_status(int status)
 }
 
 static void
-present_info(const char *msg, enum info_comparison compare, uint32_t flags,
-             const struct info *flags_and_desc,
-             size_t length)
+present_info(const char *msg, uint32_t value, const struct info *info)
 {
         unsigned int i;
 
-        for (i = 0; i < length; i++)
+        for (i = 0; i < info->num_elems; i++)
         {
-                const struct info *curr = &flags_and_desc[i];
+                const struct info_elem *curr = &info->info_elems[i];
                 int match;
 
-                switch (compare)
+                switch (info->comparison)
                 {
                 case INFO_COMPARISON_FLAG:
-                        match = (flags & curr->flag);
+                        match = (value & curr->flag);
                         break;
                 case INFO_COMPARISON_VALUE:
-                        match = (flags == curr->flag);
+                        match = (value == curr->flag);
                         break;
                 default:
                         match = 0;
@@ -149,8 +164,7 @@ static void present_ai_flags(int order, int ai_flags)
 
         sprintf(msg1, "[%d]->ai_flags = ", order);
         sprintf(msg2, "%-20s", msg1);
-        present_info(msg2, INFO_COMPARISON_FLAG, ai_flags, ai_flags_info,
-                     ARRAY_SIZE(ai_flags_info));
+        present_info(msg2, ai_flags, &ai_flags_info);
 }
 
 static void present_ai_family(int order, int ai_family)
@@ -160,8 +174,7 @@ static void present_ai_family(int order, int ai_family)
 
         sprintf(msg1, "[%d]->ai_family = ", order);
         sprintf(msg2, "%-20s", msg1);
-        present_info(msg2, INFO_COMPARISON_VALUE, ai_family, ai_family_info,
-                     ARRAY_SIZE(ai_family_info));
+        present_info(msg2, ai_family, &ai_family_info);
 }
 
 static void present_ai_socktype(int order, int ai_socktype)
