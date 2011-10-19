@@ -1,0 +1,1 @@
+This example uses getaddrinfo to implement a UDP echo server and client.

@@ -100,7 +100,7 @@ static void print_name_info(struct sockaddr_storage peer_addr,
         printf("Received from %s:%s.\n", host, service);
 }
 
-static int echo(int sfd)
+static int echo_server(int sfd)
 {
         struct sockaddr_storage peer_addr;
         char buf[BUF_SIZE];
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
          */
         for (;;)
         {
-                status = echo(sfd);
+                status = echo_server(sfd);
                 if (status != 0)
                 {
                         exit(status);

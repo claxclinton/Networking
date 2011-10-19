@@ -8,47 +8,52 @@
 
 #define BUF_SIZE 500
 
-int main(int argc, char *argv[])
+/* This example looks for address info of a specified host:port that
+ * is of type datagram, and tries to open a socket to this, and
+ * connects to it. The call to connect does not mean that the host can
+ * be used to send data to it. This guarantee is given when searching
+ * for datagram addrinfo.
+ *
+ * When a socket has been opened, the specified message is sent to
+ * this using write and read.
+ *
+ */
+static int
+get_server_addr_info(const char *server, const char *port,
+                     struct addrinfo **result)
 {
         struct addrinfo hints;
-        struct addrinfo *result;
-        struct addrinfo *rp;
-        int sfd;
-        int s;
-        size_t len;
-        ssize_t nread;
-        char buf[BUF_SIZE];
+        int status;
 
-        if (argc < 3)
-        {
-                fprintf(stderr, "Usage: %s host port msg\n", argv[0]);
-                exit(__LINE__);
-        }
-
-        /* Get address information on specified host and port. */
         memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = AF_UNSPEC; /* Allow IPv4 or IPv6. */
+        hints.ai_family = AF_UNSPEC; /* Allow IPv4 and IPv6. */
         hints.ai_socktype = SOCK_DGRAM; /* Datagram socket. */
-        s = getaddrinfo(argv[1], argv[2], &hints, &result);
-        if (s != 0)
+        status = getaddrinfo(server, port, &hints, result);
+        if (status != 0)
         {
-                fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
-                exit(__LINE__);
+                fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
+                return __LINE__;
         }
 
-        /* Go through each addrinfo and try to open a socket an
-         * connect to it. Either use the first one or exit.
-         */
-        for (rp = result; rp != NULL; rp = rp->ai_next)
+        return 0;
+ }
+
+static int get_connected_socket(struct addrinfo *addrinfo, int *result)
+{
+        int sfd;
+        struct addrinfo *curr;
+        
+        for (curr = addrinfo; curr != NULL; curr = curr->ai_next)
         {
-                sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+                sfd = socket(curr->ai_family, curr->ai_socktype,
+                             curr->ai_protocol);
                 if (sfd == -1)
                 {
                         continue;
                 }
 
-                s = connect(sfd, rp->ai_addr, rp->ai_addrlen);
-                if (s != -1)
+                int status = connect(sfd, curr->ai_addr, curr->ai_addrlen);
+                if (status != -1)
                 {
                         break;
                 }
@@ -56,34 +61,88 @@ int main(int argc, char *argv[])
                 close(sfd);
         }
 
-        /* Exit if we could not socket+connect at least once. */
-        if (rp == NULL)
+        if (curr == NULL)
         {
-                fprintf(stderr, "Could not connect.\n");
-                exit(__LINE__);
+                return __LINE__;
         }
 
-        freeaddrinfo(result);
+        *result = sfd;
 
-        /* Send specified message as a separat datagram and read
-         * the response from the server.
-         */
-        len = strlen(argv[3]) + 1;
-        s = write(sfd, argv[3], len);
-        if (s != (int)len)
+        return 0;
+}
+
+static int echo_client(int sfd, const char *msg)
+{
+        char buf[BUF_SIZE];
+        size_t len;
+        int status;
+        ssize_t nread;
+        
+        len = strlen(msg) + 1;
+        printf("Sending %ld bytes: \"%s\"\n", (long)len, msg);
+        status = write(sfd, msg, len);
+        if (status != (int)len)
         {
                 fprintf(stderr, "Partial write failed.\n");
-                exit(__LINE__);
+                return __LINE__;
         }
 
         nread = read(sfd, buf, BUF_SIZE);
         if (nread == -1)
         {
                 perror("read");
-                exit(__LINE__);
+                return __LINE__;
         }
 
         printf("Received %ld bytes: \"%s\"\n", (long)nread, buf);
+
+        return 0;
+}
+
+int main(int argc, char *argv[])
+{
+        struct addrinfo *result;
+        int sfd;
+        int status;
+        const char *host;
+        const char *port;
+        const char *msg;
+
+        if (argc < 3)
+        {
+                fprintf(stderr, "Usage: %s host port msg\n", argv[0]);
+                exit(__LINE__);
+        }
+
+        host = argv[1];
+        port = argv[2];
+        msg = argv[3];
+        
+        /* Get address information on specified host and port. */
+        status = get_server_addr_info(host, port, &result);
+        if (status != 0)
+        {
+                exit(status);
+        }
+
+        /* Go through each addrinfo and try to open a socket an
+         * connect to it. Either use the first one or exit.
+         */
+        status = get_connected_socket(result, &sfd);
+        if (status != 0)
+        {
+                exit(status);
+        }
+        freeaddrinfo(result);
+
+        /* Send specified message as a separat datagram and read
+         * the response from the server.
+         */
+        status = echo_client(sfd, msg);
+        if (status != 0)
+        {
+                exit(status);
+        }
 
         return 0;
 }
