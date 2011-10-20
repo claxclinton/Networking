@@ -1,3 +1,9 @@
+/* This file implements the printaddrinfo function.
+ * Nice features of this is the usage of strspn() function that
+ * is used to find out if a string contains a number.
+ */
+
+#include <ctype.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>
@@ -5,7 +11,6 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-
 #include "printaddrinfo.h"
 
 #define STR(x) #x
@@ -444,17 +449,48 @@ static void free_host_and_port(char *host, char *port)
         }
 }
 
+static int is_a_number(const char *s)
+{
+        return strlen(s) == strspn(s, "0123456789");
+}
+
+static int get_addr_info(const char *address, struct addrinfo **res)
+{
+        char *host;
+        char *port;
+        int status;
+        struct addrinfo hints;
+        struct addrinfo *hints_ptr = NULL;;
+
+        get_host_and_port(address, &host, &port);
+        if (port != NULL)
+        {
+                memset(&hints, 0, sizeof(hints));
+                hints.ai_family = AF_UNSPEC; /* IPv4 or IPv6. */
+                hints.ai_socktype = 0;       /* Any socket type. */
+                hints.ai_protocol = 0;       /* Any protocol. */
+                
+                if (is_a_number(port))
+                {
+                        hints.ai_flags |= AI_NUMERICSERV;
+                }
+
+                hints_ptr = &hints;
+        }
+        
+        status = getaddrinfo(host, port, hints_ptr, res);
+        free_host_and_port(host, port);
+
+        return status;
+}
+
 void print_addr_info(const char *address, int print_description)
 {
         struct addrinfo *res;
         int status;
-        char *host;
-        char *port;
 
         print_title(address);
-        get_host_and_port(address, &host, &port);
-        status = getaddrinfo(host, port, NULL, &res);
-        free_host_and_port(host, port);
+        status = get_addr_info(address, &res);
         if (status != 0)
         {
                 print_failed_status(status);

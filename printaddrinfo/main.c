@@ -1,9 +1,14 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "printaddrinfo.h"
+
 static void print_syntax(void)
 {
-        printf("SYNTAX: printaddrinfo [-d] [HOST[:PORT]]\n\n");
+        printf("SYNTAX:  printaddrinfo [-d] [HOST[:PORT]]\n\n");
+        printf("EXAMPLE: printaddrinfo localhost\n");
+        printf("EXAMPLE: printaddrinfo localhost:80\n");
+        printf("EXAMPLE: printaddrinfo localhost:http\n");
 }
 
 int main(int argc, char **argv)
