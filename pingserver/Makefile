@@ -2,11 +2,11 @@ CFLAGS += -std=c99
 CFLAGS += -g
 CFLAGS += -D_GNU_SOURCE
 
-EXEC := ping
+EXEC := pingserver
 
 OBJS := 
 OBJS += main.o
-OBJS += ping.o
+OBJS += pingserver.o
 
 all:	$(OBJS)
 	gcc -o $(EXEC) $(OBJS)

@@ -1,0 +1,20 @@
+PING SERVER
+===========
+This project should implement a PING server.
+
+Heavy inspiration from: 
+http://www.kernelthread.com/projects/hanoi/html/icmp.html
+
+HOWTO
+=====
+:::Disable the built-in ping server on loopback:::
+gagga> sudo iptables -I INPUT -i lo -p icmp -s 0/0 -d 0/0 -j DROP
+ 
+:::Start the ping server:::
+gagga> ./pingserver
+
+:::Ping the local computer with the systems ping command:::
+gagga> ping localhost
+
+:::Restore local ping responsiveness:::
+gagga> sudo iptables -I INPUT -i lo -p icmp -s 0/0 -d 0/0 -j ACCEPT
