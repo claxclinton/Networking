@@ -3,6 +3,6 @@
 
 #include <sys/socket.h>
 
-static void pingserver(const struct sockaddr_in *addr);
+extern void pingserver(void);
 
 #endif

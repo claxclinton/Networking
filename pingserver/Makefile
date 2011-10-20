@@ -1,3 +1,5 @@
+CFLAGS += -Wall
+CFLAGS += -Wextra
 CFLAGS += -std=c99
 CFLAGS += -g
 CFLAGS += -D_GNU_SOURCE
