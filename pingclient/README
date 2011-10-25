@@ -1,0 +1,5 @@
+PING SERVER
+===========
+This project should implement a PING Client.
+The source started out as the sister-project pingserver.
+Only localhost is pinged.
